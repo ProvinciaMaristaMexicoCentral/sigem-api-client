@@ -20,7 +20,8 @@
 | detalle/familiares/registros | 300 | lectura frecuente |
 | fiscales | 60 | sensible + `throttle:30,1` en SIGEM |
 
-Solo se cachean GET 200. Las excepciones no se cachean.
+Solo se cachean GET 200. Las excepciones no se cachean. `acceso()` y
+`usuarios()` nunca se cachean.
 
 ## Producción
 
