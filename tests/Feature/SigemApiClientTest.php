@@ -158,3 +158,29 @@ it('pagina alumnos con eachAlumnos hasta last_page', function () {
 
     expect($vistos)->toBe([1, 2]);
 });
+
+it('consulta el acceso sin cache en cada llamada', function () {
+    $http = new Factory();
+    $http->fake(['*' => $http->response(['personal_central_ti' => false, 'alcance_provincial' => false, 'instituciones_ids' => [31]], 200)]);
+
+    $client = testClient($http)->forUser('t', 'u1');
+    $client->acceso();
+    $acceso = $client->acceso();
+
+    expect($acceso['instituciones_ids'])->toBe([31])
+        ->and($http->recorded())->toHaveCount(2)
+        ->and($http->recorded()[0][0]->url())->toBe('http://sigem.test/api/sso/v1/me/acceso');
+});
+
+it('busca usuarios sin cache y propaga el rechazo', function () {
+    $http = new Factory();
+    $http->fake(['*' => $http->sequence()
+        ->push(['data' => [['id' => 5, 'name' => 'Ana', 'email' => 'ana@example.com']]], 200)
+        ->push(['message' => 'Forbidden'], 403)]);
+
+    $client = testClient($http)->forUser('t', 'u1');
+
+    expect($client->usuarios('Ana')['data'][0]['id'])->toBe(5)
+        ->and(fn () => $client->usuarios('Ana'))->toThrow(SigemForbiddenException::class)
+        ->and($http->recorded()[0][0]->url())->toBe('http://sigem.test/api/sso/v1/usuarios?buscar=Ana');
+});

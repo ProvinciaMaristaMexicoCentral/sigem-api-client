@@ -67,6 +67,29 @@ class SigemApiClient
     }
 
     /**
+     * Roles e instituciones autorizadas del usuario en SIGEM.
+     *
+     * Nunca se cachea: los periféricos lo usan para autorizar cada petición
+     * y una revocación en SIGEM debe surtir efecto de inmediato.
+     *
+     * @return array{personal_central_ti: bool, alcance_provincial: bool, instituciones_ids: list<int>}
+     */
+    public function acceso(): array
+    {
+        return $this->request('GET', '/api/sso/v1/me/acceso');
+    }
+
+    /**
+     * Búsqueda mínima de usuarios SIGEM (solo para el rol administrador).
+     *
+     * @return array{data: list<array{id: int, name: string, email: string}>}
+     */
+    public function usuarios(string $buscar): array
+    {
+        return $this->request('GET', '/api/sso/v1/usuarios', ['buscar' => $buscar]);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function instituciones(array $params = []): array

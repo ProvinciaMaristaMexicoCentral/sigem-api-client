@@ -13,6 +13,19 @@ $yo = $sigem->me();
 // ['tipo' => 'familiar', 'familiar_id' => 5, 'hijos_ids' => [12], 'propios_ids' => []]
 ```
 
+## Acceso autorizado (scope `acceso:read`, sin cache)
+
+```php
+$acceso = $sigem->acceso();
+// ['personal_central_ti' => false, 'alcance_provincial' => false, 'instituciones_ids' => [31]]
+
+// Solo para Personal central - TI (403 para cualquier otro usuario):
+$sigem->usuarios('garcia'); // ['data' => [['id' => 5, 'name' => '...', 'email' => '...']]]
+```
+
+`acceso()` y `usuarios()` nunca se cachean: los periféricos autorizan cada
+petición con ellos y una revocación en SIGEM surte efecto de inmediato.
+
 ## Catálogos (scope `catalogos:read`, cache compartido 12 h)
 
 ```php
