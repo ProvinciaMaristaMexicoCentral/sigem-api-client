@@ -29,6 +29,14 @@ return [
     ],
 
     /*
+    | Intento de autorización OAuth (Authorization Code + PKCE).
+    | TTL en segundos: un nuevo inicio reemplaza al anterior.
+    */
+    'oauth' => [
+        'attempt_ttl' => (int) env('SIGEM_OAUTH_ATTEMPT_TTL', 600),
+    ],
+
+    /*
     | Llaves de sesion donde la app guarda los tokens del login SSO.
     */
     'session_keys' => [

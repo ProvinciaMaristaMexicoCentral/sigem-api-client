@@ -4,6 +4,7 @@ namespace Maristas\SigemApi;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\ServiceProvider;
+use Maristas\SigemApi\Auth\SigemOAuthClient;
 
 class SigemServiceProvider extends ServiceProvider
 {
@@ -46,6 +47,25 @@ class SigemServiceProvider extends ServiceProvider
 
                 return $tokens['access_token'] ?? null;
             });
+        });
+
+        $this->app->singleton(SigemOAuthClient::class, function ($app): SigemOAuthClient {
+            $oauth = $app['config']->get('services.sigem', []);
+            $api = $app['config']->get('sigem-api', []);
+
+            return new SigemOAuthClient([
+                'base_url' => $oauth['base_url'] ?? $api['base_url'] ?? null,
+                'client_id' => $oauth['client_id'] ?? null,
+                'client_secret' => $oauth['client_secret'] ?? null,
+                'redirect_uri' => $oauth['redirect_uri'] ?? null,
+                'authorize_endpoint' => $oauth['authorize_endpoint'] ?? '/oauth/authorize',
+                'token_endpoint' => $oauth['token_endpoint'] ?? '/oauth/token',
+                'userinfo_endpoint' => $oauth['userinfo_endpoint'] ?? '/api/sso/user',
+                'scopes' => $oauth['scopes'] ?? null,
+                'timeout' => $api['timeout'] ?? 10,
+                'connect_timeout' => $api['connect_timeout'] ?? 3,
+                'attempt_ttl' => $api['oauth']['attempt_ttl'] ?? 600,
+            ]);
         });
     }
 
