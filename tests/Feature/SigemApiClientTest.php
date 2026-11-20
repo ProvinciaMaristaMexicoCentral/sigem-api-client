@@ -184,3 +184,31 @@ it('busca usuarios sin cache y propaga el rechazo', function () {
         ->and(fn () => $client->usuarios('Ana'))->toThrow(SigemForbiddenException::class)
         ->and($http->recorded()[0][0]->url())->toBe('http://sigem.test/api/sso/v1/usuarios?buscar=Ana');
 });
+
+it('registra la autorizacion de uso de imagen por POST e invalida el cache del alumno', function () {
+    $http = new Factory();
+    $http->fake([
+        'http://sigem.test/api/sso/v1/alumnos/7' => $http->sequence()
+            ->push(['data' => ['id' => 7, 'autorizacion_uso_imagen' => null]], 200)
+            ->push(['data' => ['id' => 7, 'autorizacion_uso_imagen' => 'Sí']], 200),
+        'http://sigem.test/api/sso/v1/alumnos/7/autorizacion-uso-imagen' => $http->response(['data' => ['autorizacion_uso_imagen' => 'Sí']], 201),
+    ]);
+
+    $client = testClient($http)->forUser('t', 'u1');
+    $client->alumno(7);
+    $respuesta = $client->registrarAutorizacionUsoImagen(7, true);
+
+    $post = $http->recorded()[1][0];
+    expect($respuesta['data']['autorizacion_uso_imagen'])->toBe('Sí')
+        ->and($post->method())->toBe('POST')
+        ->and($post->data())->toBe(['autoriza' => true])
+        ->and($client->alumno(7)['data']['autorizacion_uso_imagen'])->toBe('Sí');
+});
+
+it('propaga el 422 cuando la autorizacion ya estaba registrada', function () {
+    $http = new Factory();
+    $http->fake(['*' => $http->response(['message' => 'Ya registrada', 'errors' => ['autoriza' => ['Ya registrada']]], 422)]);
+
+    expect(fn () => testClient($http)->forUser('t', 'u1')->registrarAutorizacionUsoImagen(7, false))
+        ->toThrow(SigemValidationException::class);
+});

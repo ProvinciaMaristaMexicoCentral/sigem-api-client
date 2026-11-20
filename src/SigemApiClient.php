@@ -219,6 +219,23 @@ class SigemApiClient
     }
 
     /**
+     * Registra la autorización de uso de imagen de un alumno que todavía no la tiene.
+     *
+     * Solo el tutor designado puede hacerlo; si ya estaba registrada SIGEM responde 422,
+     * porque después solo la institución puede cambiarla. Invalida el cache del usuario
+     * para que la siguiente lectura del alumno traiga la decisión nueva.
+     *
+     * @return array<string, mixed>
+     */
+    public function registrarAutorizacionUsoImagen(int $alumnoId, bool $autoriza): array
+    {
+        $respuesta = $this->request('POST', "/api/sso/v1/alumnos/{$alumnoId}/autorizacion-uso-imagen", ['autoriza' => $autoriza]);
+        $this->forgetUserCache();
+
+        return $respuesta;
+    }
+
+    /**
      * Invalida todo el cache del usuario actual (bump de versión de claves).
      */
     public function forgetUserCache(): void
@@ -272,7 +289,10 @@ class SigemApiClient
      */
     protected function request(string $method, string $uri, array $params = []): array
     {
-        $response = $this->pendingRequest()->get($uri, $params);
+        $send = fn (): Response => $method === 'GET'
+            ? $this->pendingRequest()->get($uri, $params)
+            : $this->pendingRequest()->send($method, $uri, ['json' => $params]);
+        $response = $send();
 
         if ($response->status() === 401 && $this->refreshHandler !== null && ! $this->refreshAttempted) {
             $this->refreshAttempted = true;
@@ -280,7 +300,7 @@ class SigemApiClient
 
             if (is_string($renewed) && $renewed !== '') {
                 $this->accessToken = $renewed;
-                $response = $this->pendingRequest()->get($uri, $params);
+                $response = $send();
             }
         }
 

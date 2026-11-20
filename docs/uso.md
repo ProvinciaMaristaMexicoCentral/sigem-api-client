@@ -52,6 +52,14 @@ $sigem->eachAlumnos(['institucion_id' => 2], function (array $a): void {
 });
 ```
 
+## Autorización de uso de imagen (scope `imagen:write`, sin cache)
+
+```php
+// Solo el tutor designado y solo si el alumno todavía no la tiene registrada.
+// Si ya estaba registrada SIGEM responde 422 (SigemValidationException): después solo la cambia la institución.
+$sigem->registrarAutorizacionUsoImagen($alumnoId, true);
+```
+
 ## Cliente manual (jobs, comandos)
 
 ```php
